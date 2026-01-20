@@ -1,0 +1,40 @@
+http://localhost:4200/  ------> UI
+
+http://localhost:8081/actuator/health --------> patient-service
+http://localhost:8081/actuator/gateway/routes
+
+http://localhost:8080/actuator/health
+http://localhost:8080/actuator/gateway/routes -->     gateway-service
+
+---------------------------------------------------------------
+sanity check: curl.exe -i http://localhost:8080/api/patients
+-------------------------------------------
+Add a patient:
+ $body = @{
+  firstName = "Veronika"
+  lastName  = "Shaffer"
+  dob       = "1984-03-06"
+  sex       = "M"
+  address   = "1509 Culver St"
+  phone     = "841-874-6512"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8080/api/patients" `
+  -ContentType "application/json" `
+  -Body $body
+-----------------------------------------
+Verify it was added:curl.exe http://localhost:8080/api/patients
+------------------------------------------------
+Docker runs all services:
+
+ Gateway + patient-service work
+
+ Data is saved in MongoDB
+
+ UI is accessible at http://localhost:4200
+
+ UI project is correctly opened in IntelliJ
+
+Notes service health: http://localhost:8082/actuator/health
+Notes via gateway:     http://localhost:8080/api/patients/<PATIENT_ID>/notes

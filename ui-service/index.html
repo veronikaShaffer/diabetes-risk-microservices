@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Diabetes UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 14px; }
+    .muted { color: #666; font-size: 12px; }
+    select, input, textarea { padding: 8px; font-size: 14px; }
+    textarea { width: 100%; box-sizing: border-box; }
+    pre.note { white-space: pre-wrap; margin: 8px 0 0; background: #f7f7f7; padding: 10px; border-radius: 8px; }
+    .note-meta { display: flex; gap: 10px; align-items: baseline; }
+    .note-meta b { font-size: 14px; }
+    .note-meta span { font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Diabetes Microservices UI</h1>
+
+  <p class="muted">
+    This UI calls the backend via <code>/api</code> (proxied to gateway-service).
+  </p>
+
+  <div class="card">
+    <div class="row">
+      <button onclick="loadPatients()">Load patients</button>
+
+      <label>
+        Select patient:
+        <select id="patientSelect" onchange="onPatientSelected()">
+          <option value="">(load patients first)</option>
+        </select>
+      </label>
+
+      <button onclick="loadNotes()">Load notes</button>
+    </div>
+
+    <div id="patientOut" class="muted" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Notes history</h3>
+    <div id="notesOut" class="muted">Select a patient and click “Load notes”.</div>
+  </div>
+
+  <div class="card">
+    <h3>Add a note</h3>
+
+    <div class="row">
+      <label>
+        Physician:
+        <input id="physician" value="Dr. Demo" />
+      </label>
+    </div>
+
+    <div style="margin-top:10px;">
+      <textarea id="newNote" rows="8" placeholder="Type physician note here (line breaks will be preserved)..."></textarea>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button onclick="addNote()">Add note</button>
+      <span id="addStatus" class="muted"></span>
+    </div>
+  </div>
+
+  <script>
+    let patientsCache = [];
+
+    function setStatus(elId, msg) {
+      document.getElementById(elId).textContent = msg || '';
+    }
+
+    function getSelectedPatientId() {
+      return document.getElementById('patientSelect').value;
+    }
+
+    async function loadPatients() {
+      setStatus('patientOut', 'Loading patients...');
+      setStatus('notesOut', 'Select a patient and click “Load notes”.');
+
+      try {
+        const res = await fetch('/api/patients');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        patientsCache = Array.isArray(data) ? data : [];
+        const sel = document.getElementById('patientSelect');
+        sel.innerHTML = '<option value="">(select)</option>';
+
+        patientsCache.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.firstName || ''} ${p.lastName || ''}  (${p.id})`.trim();
+          sel.appendChild(opt);
+        });
+
+        setStatus('patientOut', `Loaded ${patientsCache.length} patient(s).`);
+      } catch (e) {
+        setStatus('patientOut', 'ERROR loading patients: ' + e);
+      }
+    }
+
+    function onPatientSelected() {
+      const id = getSelectedPatientId();
+      if (!id) return;
+      const p = patientsCache.find(x => x.id === id);
+      if (p) {
+        setStatus('patientOut', `Selected: ${p.firstName || ''} ${p.lastName || ''} (id=${p.id})`);
+      }
+    }
+
+    async function loadNotes() {
+      const patientId = getSelectedPatientId();
+      if (!patientId) {
+        setStatus('notesOut', 'Please select a patient first.');
+        return;
+      }
+
+      setStatus('notesOut', 'Loading notes...');
+
+      try {
+        const res = await fetch(`/api/patients/${encodeURIComponent(patientId)}/notes`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        const notes = await res.json();
+        renderNotes(notes);
+      } catch (e) {
+        setStatus('notesOut', 'ERROR loading notes: ' + e);
+      }
+    }
+
+    function renderNotes(notes) {
+      const container = document.getElementById('notesOut');
+      if (!Array.isArray(notes) || notes.length === 0) {
+        container.innerHTML = '<span class="muted">No notes yet for this patient.</span>';
+        return;
+      }
+
+      container.innerHTML = '';
+      notes.forEach(n => {
+        const wrap = document.createElement('div');
+        wrap.style.marginBottom = '12px';
+
+        const meta = document.createElement('div');
+        meta.className = 'note-meta';
+
+        const doc = document.createElement('b');
+        doc.textContent = n.physician || 'Physician';
+
+        const date = document.createElement('span');
+        date.textContent = n.date ? new Date(n.date).toLocaleString() : '';
+
+        meta.appendChild(doc);
+        meta.appendChild(date);
+
+        const pre = document.createElement('pre');
+        pre.className = 'note';
+        pre.textContent = n.note || '';
+
+        wrap.appendChild(meta);
+        wrap.appendChild(pre);
+
+        container.appendChild(wrap);
+      });
+    }
+
+    async function addNote() {
+      const patientId = getSelectedPatientId();
+      if (!patientId) {
+        setStatus('addStatus', 'Select a patient first.');
+        return;
+      }
+
+      const physician = document.getElementById('physician').value || '';
+      const note = document.getElementById('newNote').value || '';
+
+      if (!physician.trim() || !note.trim()) {
+        setStatus('addStatus', 'Physician and note are required.');
+        return;
+      }
+
+      setStatus('addStatus', 'Saving...');
+
+      try {
+        const res = await fetch(`/api/patients/${encodeURIComponent(patientId)}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ physician, note })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error('HTTP ' + res.status + ' - ' + text);
+        }
+
+        document.getElementById('newNote').value = '';
+        setStatus('addStatus', 'Saved.');
+
+        await loadNotes();
+      } catch (e) {
+        setStatus('addStatus', 'ERROR saving note: ' + e);
+      }
+    }
+  </script>
+</body>
+</html>

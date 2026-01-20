@@ -1,0 +1,20 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Java
+target/
+
+# Node / Angular
+node_modules/
+dist/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env

@@ -1,0 +1,8 @@
+[
+  {
+    "patientId": "REPLACE_WITH_REAL_PATIENT_ID",
+    "physician": "Dr. Demo",
+    "date": "2026-01-01T10:00:00Z",
+    "note": "Initial physician note example."
+  }
+]
