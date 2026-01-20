@@ -26,6 +26,11 @@ $GATEWAY_CONTAINER = "gateway-service"
 $GATEWAY_IMAGE     = "gateway-service:1.0"
 $GATEWAY_PORT      = 8080
 
+$RISK_DIR       = Join-Path $PSScriptRoot "risk-service"
+$RISK_CONTAINER = "risk-service"
+$RISK_IMAGE     = "risk-service:1.0"
+$RISK_PORT      = 8083
+
 $UI_DIR       = Join-Path $PSScriptRoot "ui-service"
 $UI_CONTAINER = "ui-service"
 $UI_IMAGE     = "ui-service:1.0"
@@ -115,17 +120,20 @@ try {
     Remove-ContainerIfExists $GATEWAY_CONTAINER
     Remove-ContainerIfExists $NOTES_CONTAINER
     Remove-ContainerIfExists $PATIENT_CONTAINER
+    Remove-ContainerIfExists $RISK_CONTAINER
     Remove-ContainerIfExists $MONGO_CONTAINER
 
     # Build JARs
     Maven-Package $PATIENT_DIR
     Maven-Package $NOTES_DIR
     Maven-Package $GATEWAY_DIR
+    Maven-Package $RISK_DIR
 
     # Docker builds
     Docker-Build  $PATIENT_DIR $PATIENT_IMAGE
     Docker-Build  $NOTES_DIR   $NOTES_IMAGE
     Docker-Build  $GATEWAY_DIR $GATEWAY_IMAGE
+    Docker-Build  $RISK_DIR    $RISK_IMAGE
     Docker-Build  $UI_DIR      $UI_IMAGE
 
     # Start MongoDB
@@ -154,6 +162,12 @@ try {
     docker run -d --name $GATEWAY_CONTAINER --network $NETWORK -p "$GATEWAY_PORT`:$GATEWAY_PORT" `
         $GATEWAY_IMAGE | Out-Null
 
+    # Start risk-service
+    Write-Host ""
+    Write-Host "Starting risk-service..." -ForegroundColor Green
+    docker run -d --name $RISK_CONTAINER --network $NETWORK -p "$RISK_PORT`:$RISK_PORT" `
+    $RISK_IMAGE | Out-Null
+
     # Start ui-service (nginx)
     Write-Host ""
     Write-Host "Starting ui-service..." -ForegroundColor Green
@@ -170,9 +184,12 @@ try {
     Write-Host ""
     Write-Host "Sanity check:   curl.exe -i http://localhost:$GATEWAY_PORT/api/patients"
     Write-Host "Notes check:    curl.exe -i http://localhost:$GATEWAY_PORT/api/patients/<PATIENT_ID>/notes"
+    Write-Host "Risk health:   http://localhost:$RISK_PORT/actuator/health"
+    Write-Host "Risk check:    curl.exe -i http://localhost:$GATEWAY_PORT/api/assess/test"
 }
 catch {
     Write-Host ""
     Write-Error $_
     exit 1
 }
+

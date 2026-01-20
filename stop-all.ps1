@@ -8,6 +8,7 @@ $NETWORK = "diabetes-net"
 $CONTAINERS = @(
   "ui-service",
   "gateway-service",
+  "risk-service",
   "notes-service",
   "patient-service",
   "mongo"

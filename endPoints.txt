@@ -50,3 +50,5 @@ Invoke-RestMethod `
   -Method Post `
   -ContentType "application/json" `
   -Body $body
+
+risk-service: http://localhost:8083/api/assess/test
