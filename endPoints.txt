@@ -38,3 +38,15 @@ Docker runs all services:
 
 Notes service health: http://localhost:8082/actuator/health
 Notes via gateway:     http://localhost:8080/api/patients/<PATIENT_ID>/notes
+
+insert data into notes:
+$body = @{
+    physician = "Dr. Demo"
+    note      = "Patient reports dizziness and headaches."
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/patients/{id}/notes" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
