@@ -52,3 +52,67 @@ Invoke-RestMethod `
   -Body $body
 
 risk-service: http://localhost:8083/api/assess/test
+
+
+-----------------------------------------------------------------------testing-----------------------
+after starting try in power shell:
+Invoke-RestMethod http://localhost:8080/actuator/health
+Invoke-RestMethod http://localhost:8081/actuator/health
+Invoke-RestMethod http://localhost:8082/actuator/health
+Invoke-RestMethod http://localhost:8083/actuator/health
+
+========================
+insert in patients:
+$body = @{
+  firstName = "Test"
+  lastName  = "User"
+  dob       = "1980-01-01"
+  gender    = "M"
+  height    = 180
+  weight    = 90
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/patients" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
+
+======================
+insert into notes:
+$body = @{
+  physician = "Dr. Demo"
+  note = "hemoglobin a1c microalbumin smoking cholesterol abnormal"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/patients/{id here}/notes" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
+
+
+==================================================
+gateway routes: Invoke-RestMethod http://localhost:8080/actuator/gateway/routes
+(should be this: predicate : (RouteDefinitionRouteLocator$$Lambda$1203/0x000077a2805a4640 && Paths: [/api/patients/*/notes/**], match trailing slash: true)
+route_id  : notes-service
+filters   : {}
+uri       : http://notes-service:8082
+order     : 0
+
+predicate : (RouteDefinitionRouteLocator$$Lambda$1203/0x000077a2805a4640 && Paths: [/api/patients/**], match trailing slash: true)
+route_id  : patient-service
+filters   : {}
+uri       : http://patient-service:8081
+order     : 0
+
+predicate : (RouteDefinitionRouteLocator$$Lambda$1203/0x000077a2805a4640 && Paths: [/api/assess/**], match trailing slash: true)
+route_id  : risk-service
+filters   : {}
+uri       : http://risk-service:8083
+order     : 0 )
+
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/assess/{patientId}" `
+  -Method Get
+

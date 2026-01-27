@@ -2,6 +2,7 @@ package com.example.patient_service.api;
 
 import com.example.patient_service.model.Patient;
 import com.example.patient_service.repository.PatientRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,5 +26,12 @@ public class PatientController {
     @GetMapping
     public List<Patient> list() {
         return repo.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Patient> getById(@PathVariable String id) {
+        return repo.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
