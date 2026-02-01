@@ -15,11 +15,11 @@ public class NotesClient {
 
     private final WebClient webClient;
 
-    @Value("${gateway.base.url}")
+    @Value("${gateway.base-url}")
     private String gatewayBaseUrl;
 
-    public NotesClient(WebClient.Builder builder) {
-        this.webClient = builder.build();
+    public NotesClient(WebClient webClient) {
+        this.webClient = webClient;
     }
 
     public List<NoteDto> getNotesByPatientId(String patientId) {
@@ -31,11 +31,10 @@ public class NotesClient {
                     .collectList()
                     .block();
         } catch (WebClientResponseException e) {
-            // If patient has no notes or endpoint returns 404, treat as empty notes
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Collections.emptyList();
             }
-            throw e; // other errors should surface
+            throw e;
         }
     }
 }

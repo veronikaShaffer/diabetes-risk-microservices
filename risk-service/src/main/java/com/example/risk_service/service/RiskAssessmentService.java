@@ -87,7 +87,11 @@ public class RiskAssessmentService {
                 .map(n -> n.getNote().toLowerCase(Locale.ROOT))
                 .reduce("", (a, b) -> a + "\n" + b);
 
-        return (int) TRIGGERS.stream().filter(allText::contains).count();
+        long uniqueFound = TRIGGERS.stream()
+                .filter(allText::contains)
+                .count();
+
+        return (int) uniqueFound;
     }
 
     private String mapRisk(int age, String gender, int triggers) {
@@ -95,17 +99,17 @@ public class RiskAssessmentService {
         boolean under30 = age < 30;
 
         // Early Onset
-        if (over30 && triggers >= 8) return "Early Onset";
-        if (under30 && "male".equals(gender) && triggers >= 5) return "Early Onset";
-        if (under30 && "female".equals(gender) && triggers >= 6) return "Early Onset";
+        if (over30 && triggers >= 8) return "EarlyOnset";
+        if (under30 && "male".equals(gender) && triggers >= 5) return "EarlyOnset";
+        if (under30 && "female".equals(gender) && triggers >= 6) return "EarlyOnset";
 
         // In Danger
-        if (over30 && triggers >= 6 && triggers <= 7) return "In Danger";
-        if (under30 && "male".equals(gender) && triggers >= 3 && triggers <= 4) return "In Danger";
-        if (under30 && "female".equals(gender) && triggers >= 4 && triggers <= 5) return "In Danger";
+        if (over30 && triggers >= 6 && triggers <= 7) return "InDanger";
+        if (under30 && "male".equals(gender) && triggers >= 3 && triggers <= 4) return "InDanger";
+        if (under30 && "female".equals(gender) && triggers >= 4 && triggers <= 5) return "InDanger";
 
         // Borderline
-        if (over30 && triggers >= 2 && triggers <= 5) return "Border line";
+        if (over30 && triggers >= 2 && triggers <= 5) return "Borderline";
 
         return "None";
     }

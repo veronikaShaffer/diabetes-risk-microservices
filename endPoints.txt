@@ -11,8 +11,8 @@ sanity check: curl.exe -i http://localhost:8080/api/patients
 -------------------------------------------
 Add a patient:
  $body = @{
-  firstName = "Veronika"
-  lastName  = "Shaffer"
+  firstName = "John"
+  lastName  = "Lee"
   dob       = "1984-03-06"
   sex       = "M"
   address   = "1509 Culver St"
@@ -22,7 +22,8 @@ Add a patient:
 Invoke-RestMethod -Method Post `
   -Uri "http://localhost:8080/api/patients" `
   -ContentType "application/json" `
-  -Body $body
+ -Body $body `
+  -Credential $cred
 -----------------------------------------
 Verify it was added:curl.exe http://localhost:8080/api/patients
 ------------------------------------------------
@@ -46,10 +47,11 @@ $body = @{
 } | ConvertTo-Json
 
 Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/patients/{id}/notes" `
+  -Uri "http://localhost:8080/api/patients/<PATIENT_ID>/notes" `
   -Method Post `
   -ContentType "application/json" `
-  -Body $body
+  -Body $body `
+  -Credential $cred
 
 risk-service: http://localhost:8083/api/assess/test
 
@@ -61,35 +63,21 @@ Invoke-RestMethod http://localhost:8081/actuator/health
 Invoke-RestMethod http://localhost:8082/actuator/health
 Invoke-RestMethod http://localhost:8083/actuator/health
 
-========================
-insert in patients:
-$body = @{
-  firstName = "Test"
-  lastName  = "User"
-  dob       = "1980-01-01"
-  gender    = "M"
-  height    = 180
-  weight    = 90
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/patients" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body $body
+Invoke-RestMethod "http://localhost:8080/api/assess/<PATIENT_ID>" -Credential $cred
 
 ======================
-insert into notes:
+insert into notes ( will have key words and create risk level):
 $body = @{
   physician = "Dr. Demo"
   note = "hemoglobin a1c microalbumin smoking cholesterol abnormal"
 } | ConvertTo-Json
 
 Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/patients/{id here}/notes" `
+  -Uri "http://localhost:8080/api/patients/{patient id}/notes" `
   -Method Post `
   -ContentType "application/json" `
-  -Body $body
+  -Body $body `
+  -Credential $cred
 
 
 ==================================================
@@ -116,3 +104,14 @@ Invoke-RestMethod `
   -Uri "http://localhost:8080/api/assess/{patientId}" `
   -Method Get
 
+
+=========================security==========================
+Do this once per terminal session:
+
+$cred = Get-Credential  # demo / demo
+
+============================test jacoco reports====================
+Go to:
+C:\Users\danel\Desktop\Project\{name}-service\target\site\jacoco\
+
+Double-click index.html
