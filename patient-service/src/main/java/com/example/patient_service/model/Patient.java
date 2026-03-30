@@ -1,11 +1,23 @@
 package com.example.patient_service.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
+import java.util.UUID;
+
+@Entity
+@Table(name = "patients")
 public class Patient {
 
+    /**
+     * We keep id as String (UUID) because other microservices commonly refer to patientId as a string.
+     * For SQL inserts (data.sql) we can seed fixed UUIDs.
+     */
     @Id
+    @Column(length = 36)
     private String id;
 
     private String firstName;
@@ -26,6 +38,13 @@ public class Patient {
         this.sex = sex;
         this.address = address;
         this.phone = phone;
+    }
+
+    @PrePersist
+    void ensureId() {
+        if (this.id == null || this.id.isBlank()) {
+            this.id = UUID.randomUUID().toString();
+        }
     }
 
     public String getId() { return id; }

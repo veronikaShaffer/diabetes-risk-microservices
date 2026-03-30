@@ -47,13 +47,14 @@ $body = @{
 } | ConvertTo-Json
 
 Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/patients/<PATIENT_ID>/notes" `
+  -Uri "http://localhost:8080/api/patients/6990e448d2fa7a53fad3be9d/notes" `
   -Method Post `
   -ContentType "application/json" `
   -Body $body `
   -Credential $cred
 
 risk-service: http://localhost:8083/api/assess/test
+
 
 
 -----------------------------------------------------------------------testing-----------------------
@@ -115,3 +116,24 @@ Go to:
 C:\Users\danel\Desktop\Project\{name}-service\target\site\jacoco\
 
 Double-click index.html
+=========================================================
+
+
+
+A) Show security (unauthenticated)
+curl.exe -i http://localhost:8080/api/patients
+
+
+ Expect: 401 Unauthorized
+
+B) Show functional access (authenticated)
+curl.exe -i -u demo:demo http://localhost:8080/api/patients
+
+
+ Expect: 200 OK and []
+
+C) Show containers running
+docker ps
+
+
+ Shows all services + Mongo + UI

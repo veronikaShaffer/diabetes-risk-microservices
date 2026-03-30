@@ -1,251 +1,546 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Diabetes UI</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Diabetes Risk UI</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        button { padding: 8px 12px; cursor: pointer; }
-        .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-        .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 14px; }
-        .muted { color: #666; font-size: 12px; }
-        select, input, textarea { padding: 8px; font-size: 14px; }
-        textarea { width: 100%; box-sizing: border-box; }
-        pre.note { white-space: pre-wrap; margin: 8px 0 0; background: #f7f7f7; padding: 10px; border-radius: 8px; }
-        .note-meta { display: flex; gap: 10px; align-items: baseline; }
-        .note-meta b { font-size: 14px; }
-        .note-meta span { font-size: 12px; color: #666; }
+        body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+          background: #f7f7f7;
+          color: #222;
+        }
+
+        h1, h2, h3 {
+          margin-top: 0;
+        }
+
+        .section {
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 10px;
+          padding: 16px;
+          margin-bottom: 18px;
+          max-width: 1100px;
+        }
+
+        .row {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 12px;
+        }
+
+        .field {
+          display: flex;
+          flex-direction: column;
+          min-width: 200px;
+          flex: 1;
+        }
+
+        label {
+          font-weight: bold;
+          margin-bottom: 6px;
+        }
+
+        input, textarea, button, select {
+          font: inherit;
+          padding: 8px;
+          border: 1px solid #bbb;
+          border-radius: 6px;
+        }
+
+        textarea {
+          min-height: 90px;
+          resize: vertical;
+        }
+
+        button {
+          cursor: pointer;
+          background: #f0f0f0;
+        }
+
+        button:hover {
+          background: #e7e7e7;
+        }
+
+        .muted {
+          color: #666;
+          font-size: 0.95rem;
+        }
+
+        .error {
+          color: #b00020;
+          white-space: pre-wrap;
+          margin-top: 10px;
+        }
+
+        .success {
+          color: #0a7a2f;
+          white-space: pre-wrap;
+          margin-top: 10px;
+        }
+
+        .patient-card {
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 14px;
+          margin-bottom: 12px;
+          background: #fcfcfc;
+        }
+
+        .patient-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 8px 16px;
+          margin-bottom: 12px;
+        }
+
+        .patient-grid div strong {
+          display: inline-block;
+          min-width: 110px;
+        }
+
+        .actions {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 10px;
+        }
+
+        .result-box {
+          margin-top: 10px;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background: #fafafa;
+          white-space: pre-wrap;
+        }
+
+        .notes-box {
+          margin-top: 10px;
+          padding: 10px;
+          border: 1px solid #d8d8d8;
+          border-radius: 8px;
+          background: #fdfdfd;
+          white-space: pre-wrap;
+        }
+
+        .risk-none {
+          background: #e7f6ea;
+          color: #1f6b2a;
+          border: 1px solid #b7dfbf;
+          font-weight: bold;
+        }
+
+        .risk-borderline {
+          background: #fff8e1;
+          color: #8a6d1d;
+          border: 1px solid #ecd48b;
+          font-weight: bold;
+        }
+
+        .risk-danger {
+          background: #fff0e0;
+          color: #a85a00;
+          border: 1px solid #f0be7a;
+          font-weight: bold;
+        }
+
+        .risk-early {
+          background: #fdeaea;
+          color: #a12626;
+          border: 1px solid #e7a8a8;
+          font-weight: bold;
+        }
+
+        .topbar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .hidden {
+          display: none;
+        }
     </style>
 </head>
 <body>
+<div class="section">
+    <div class="topbar">
+        <div>
+            <h1>Diabetes Risk Assessment System</h1>
+            <div class="muted">Gateway-backed UI for patients, notes, and risk assessment.</div>
+        </div>
+        <button type="button" onclick="logout()">Clear Saved Login</button>
+    </div>
+</div>
 
-<h1>Diabetes Microservices UI</h1>
-
-<p class="muted">
-    This UI calls the backend via <code>/api</code> (proxied to gateway-service).
-</p>
-
-<div class="card">
+<div class="section" id="loginSection">
+    <h2>1. Sign In</h2>
     <div class="row">
-        <button onclick="loadPatients()">Load patients</button>
+        <div class="field">
+            <label for="authUser">Username</label>
+            <input id="authUser" type="text" placeholder="Enter gateway username" />
+        </div>
+        <div class="field">
+            <label for="authPass">Password</label>
+            <input id="authPass" type="password" placeholder="Enter gateway password" />
+        </div>
+    </div>
+    <div class="actions">
+        <button type="button" onclick="saveLogin()">Save Login</button>
+        <button type="button" onclick="authenticateAndLoad()">Log In</button>
+    </div>
+    <div id="authMsg" class="success"></div>
+    <div id="authErr" class="error"></div>
+</div>
 
-        <label>
-            Select patient:
-            <select id="patientSelect" onchange="onPatientSelected()">
-                <option value="">(load patients first)</option>
+<div class="section hidden" id="patientFormSection">
+    <h2>2. Add Patient</h2>
+    <div class="row">
+        <div class="field">
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" />
+        </div>
+        <div class="field">
+            <label for="lastName">Last Name</label>
+            <input id="lastName" type="text" />
+        </div>
+        <div class="field">
+            <label for="dob">Date of Birth</label>
+            <input id="dob" type="date" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="field">
+            <label for="sex">Sex</label>
+            <select id="sex">
+                <option value="">Select</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
             </select>
-        </label>
-
-        <button onclick="loadNotes()">Load notes</button>
+        </div>
+        <div class="field">
+            <label for="address">Address</label>
+            <input id="address" type="text" />
+        </div>
+        <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" type="text" />
+        </div>
     </div>
 
-    <div id="patientOut" class="muted" style="margin-top:10px;"></div>
+    <div class="actions">
+        <button type="button" onclick="createPatient()">Create Patient</button>
+    </div>
+    <div id="createMsg" class="success"></div>
+    <div id="createErr" class="error"></div>
 </div>
 
-<div class="card">
-    <h3>Risk assessment</h3>
-    <div class="row">
-        <button onclick="loadRisk()">Refresh risk</button>
-        <span id="riskOut" class="muted">Select a patient to see risk.</span>
+<div class="section hidden" id="patientsSection">
+    <h2>3. Patients</h2>
+    <div class="actions">
+        <button type="button" onclick="loadPatients()">Refresh Patients</button>
     </div>
-</div>
-
-<div class="card">
-    <h3>Notes history</h3>
-    <div id="notesOut" class="muted">Select a patient and click “Load notes”.</div>
-</div>
-
-<div class="card">
-    <h3>Add a note</h3>
-
-    <div class="row">
-        <label>
-            Physician:
-            <input id="physician" value="Dr. Demo" />
-        </label>
-    </div>
-
-    <div style="margin-top:10px;">
-        <textarea id="newNote" rows="8" placeholder="Type physician note here (line breaks will be preserved)..."></textarea>
-    </div>
-
-    <div class="row" style="margin-top:10px;">
-        <button onclick="addNote()">Add note</button>
-        <span id="addStatus" class="muted"></span>
-    </div>
+    <div id="patientsMsg" class="success"></div>
+    <div id="patientsErr" class="error"></div>
+    <div id="patientsList"></div>
 </div>
 
 <script>
-    /* ===== BASIC AUTH (demo only) ===== */
-    const BASIC_USER = "demo";
-    const BASIC_PASS = "demo";
-    const BASIC_TOKEN = btoa(`${BASIC_USER}:${BASIC_PASS}`);
-
-    function authFetch(url, options = {}) {
-        options.headers = options.headers || {};
-        options.headers["Authorization"] = `Basic ${BASIC_TOKEN}`;
-        return fetch(url, options);
+    function getAuthHeader() {
+      const u = sessionStorage.getItem("authUser") || "";
+      const p = sessionStorage.getItem("authPass") || "";
+      if (!u || !p) return {};
+      return { "Authorization": "Basic " + btoa(u + ":" + p) };
     }
 
-    let patientsCache = [];
-
-    function setStatus(elId, msg) {
-        document.getElementById(elId).textContent = msg || '';
+    function setText(id, text) {
+      document.getElementById(id).innerText = text || "";
     }
 
-    function getSelectedPatientId() {
-        return document.getElementById('patientSelect').value;
+    function clearMessages() {
+      ["authMsg", "authErr", "createMsg", "createErr", "patientsMsg", "patientsErr"].forEach(id => setText(id, ""));
+    }
+
+    function showProtectedSections() {
+      document.getElementById("patientFormSection").classList.remove("hidden");
+      document.getElementById("patientsSection").classList.remove("hidden");
+    }
+
+    function hideProtectedSections() {
+      document.getElementById("patientFormSection").classList.add("hidden");
+      document.getElementById("patientsSection").classList.add("hidden");
+    }
+
+    async function api(path, options = {}) {
+      const headers = {
+        ...getAuthHeader(),
+        ...(options.headers || {})
+      };
+
+      const res = await fetch(path, {
+        method: options.method || "GET",
+        headers,
+        body: options.body
+      });
+
+      const text = await res.text();
+      let body = null;
+
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = text;
+        }
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} ${res.statusText}\n${typeof body === "string" ? body : JSON.stringify(body, null, 2)}`);
+      }
+
+      return body;
+    }
+
+    function saveLogin() {
+      const user = document.getElementById("authUser").value.trim();
+      const pass = document.getElementById("authPass").value;
+
+      sessionStorage.setItem("authUser", user);
+      sessionStorage.setItem("authPass", pass);
+
+      clearMessages();
+      setText("authMsg", "Login saved in session storage.");
+    }
+
+    async function authenticateAndLoad() {
+      clearMessages();
+      saveLogin();
+
+      try {
+        await api("/api/patients");
+        showProtectedSections();
+        setText("authMsg", "Authentication successful.");
+        await loadPatients();
+      } catch (e) {
+        hideProtectedSections();
+        setText("authErr", e.message || String(e));
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem("authUser");
+      sessionStorage.removeItem("authPass");
+      document.getElementById("authUser").value = "";
+      document.getElementById("authPass").value = "";
+      clearMessages();
+      document.getElementById("patientsList").innerHTML = "";
+      hideProtectedSections();
+      setText("authMsg", "Saved login cleared.");
+    }
+
+    function loadSavedLoginIntoInputs() {
+      document.getElementById("authUser").value = sessionStorage.getItem("authUser") || "";
+      document.getElementById("authPass").value = sessionStorage.getItem("authPass") || "";
+    }
+
+    async function createPatient() {
+      clearMessages();
+
+      const patient = {
+        firstName: document.getElementById("firstName").value.trim(),
+        lastName: document.getElementById("lastName").value.trim(),
+        dob: document.getElementById("dob").value,
+        sex: document.getElementById("sex").value,
+        address: document.getElementById("address").value.trim(),
+        phone: document.getElementById("phone").value.trim()
+      };
+
+      try {
+        const created = await api("/api/patients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patient)
+        });
+
+        setText("createMsg", `Patient created successfully. ID: ${created.id}`);
+        document.getElementById("firstName").value = "";
+        document.getElementById("lastName").value = "";
+        document.getElementById("dob").value = "";
+        document.getElementById("sex").value = "";
+        document.getElementById("address").value = "";
+        document.getElementById("phone").value = "";
+
+        await loadPatients();
+      } catch (e) {
+        setText("createErr", e.message || String(e));
+      }
     }
 
     async function loadPatients() {
-        setStatus('patientOut', 'Loading patients...');
-        setStatus('notesOut', 'Select a patient and click “Load notes”.');
+      const list = document.getElementById("patientsList");
+      list.innerHTML = "";
+      setText("patientsMsg", "");
+      setText("patientsErr", "");
 
-        try {
-            const res = await authFetch('/api/patients');
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-
-            patientsCache = Array.isArray(data) ? data : [];
-            const sel = document.getElementById('patientSelect');
-            sel.innerHTML = '<option value="">(select)</option>';
-
-            patientsCache.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = `${p.firstName || ''} ${p.lastName || ''} (${p.id})`.trim();
-                sel.appendChild(opt);
-            });
-
-            setStatus('patientOut', `Loaded ${patientsCache.length} patient(s).`);
-        } catch (e) {
-            setStatus('patientOut', 'ERROR loading patients: ' + e);
-        }
-    }
-
-    function onPatientSelected() {
-        const id = getSelectedPatientId();
-        if (!id) {
-            setStatus('riskOut', 'Select a patient to see risk.');
-            return;
+      try {
+        const patients = await api("/api/patients");
+        if (!Array.isArray(patients) || patients.length === 0) {
+          setText("patientsMsg", "No patients found.");
+          return;
         }
 
-        const p = patientsCache.find(x => x.id === id);
-        if (p) {
-            setStatus('patientOut', `Selected: ${p.firstName || ''} ${p.lastName || ''} (id=${p.id})`);
-        }
+        patients.forEach(p => {
+          const card = document.createElement("div");
+          card.className = "patient-card";
 
-        loadRisk();
-    }
+          const safeId = p.id ?? "";
 
-    async function loadNotes() {
-        const patientId = getSelectedPatientId();
-        if (!patientId) {
-            setStatus('notesOut', 'Please select a patient first.');
-            return;
-        }
+          card.innerHTML = `
+            <div class="patient-grid">
+              <div><strong>ID:</strong> ${safeId}</div>
+              <div><strong>First name:</strong> ${p.firstName ?? ""}</div>
+              <div><strong>Last name:</strong> ${p.lastName ?? ""}</div>
+              <div><strong>Date of birth:</strong> ${p.dob ?? ""}</div>
+              <div><strong>Sex:</strong> ${p.sex ?? ""}</div>
+              <div><strong>Address:</strong> ${p.address ?? ""}</div>
+              <div><strong>Phone:</strong> ${p.phone ?? ""}</div>
+            </div>
 
-        setStatus('notesOut', 'Loading notes...');
+            <div class="section" style="margin:12px 0 0 0; max-width:none;">
+              <h3 style="margin-bottom:10px;">Add Note</h3>
+              <div class="row">
+                <div class="field">
+                  <label>Physician</label>
+                  <input type="text" id="physician-${safeId}" value="Dr. Demo" />
+                </div>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label>Note</label>
+                  <textarea id="note-${safeId}" placeholder="Enter note text"></textarea>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="button" onclick="addNote('${safeId}')">Save Note</button>
+                <button type="button" onclick="assessRisk('${safeId}')">Assess Risk</button>
+              </div>
+              <div id="msg-${safeId}" class="success"></div>
+              <div id="err-${safeId}" class="error"></div>
 
-        try {
-            const res = await authFetch(`/api/patients/${encodeURIComponent(patientId)}/notes`);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const notes = await res.json();
-            renderNotes(notes);
-        } catch (e) {
-            setStatus('notesOut', 'ERROR loading notes: ' + e);
-        }
-    }
+              <div id="notesSection-${safeId}" class="notes-box" style="display:none;">
+                <strong>Notes</strong>
+                <div id="notes-${safeId}" style="margin-top:8px;"></div>
+              </div>
 
-    async function loadRisk() {
-        const patientId = getSelectedPatientId();
-        if (!patientId) {
-            setStatus('riskOut', 'Select a patient first.');
-            return;
-        }
+              <div id="risk-${safeId}" class="result-box" style="display:none;"></div>
+            </div>
+          `;
 
-        setStatus('riskOut', 'Calculating risk...');
-
-        try {
-            const res = await authFetch(`/api/assess/${encodeURIComponent(patientId)}`);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            setStatus('riskOut', `Risk level: ${data.riskLevel || data}`);
-        } catch (e) {
-            setStatus('riskOut', 'ERROR loading risk: ' + e);
-        }
-    }
-
-    function renderNotes(notes) {
-        const container = document.getElementById('notesOut');
-        if (!Array.isArray(notes) || notes.length === 0) {
-            container.innerHTML = '<span class="muted">No notes yet for this patient.</span>';
-            return;
-        }
-
-        container.innerHTML = '';
-        notes.forEach(n => {
-            const wrap = document.createElement('div');
-            wrap.style.marginBottom = '12px';
-
-            const meta = document.createElement('div');
-            meta.className = 'note-meta';
-
-            const doc = document.createElement('b');
-            doc.textContent = n.physician || 'Physician';
-
-            const date = document.createElement('span');
-            date.textContent = n.date ? new Date(n.date).toLocaleString() : '';
-
-            meta.appendChild(doc);
-            meta.appendChild(date);
-
-            const pre = document.createElement('pre');
-            pre.className = 'note';
-            pre.textContent = n.note || '';
-
-            wrap.appendChild(meta);
-            wrap.appendChild(pre);
-
-            container.appendChild(wrap);
+          list.appendChild(card);
+          loadNotes(safeId);
         });
+
+        setText("patientsMsg", `Loaded ${patients.length} patient(s).`);
+      } catch (e) {
+        setText("patientsErr", e.message || String(e));
+      }
     }
 
-    async function addNote() {
-        const patientId = getSelectedPatientId();
-        if (!patientId) {
-            setStatus('addStatus', 'Select a patient first.');
-            return;
-        }
+    async function addNote(patientId) {
+      setText(`msg-${patientId}`, "");
+      setText(`err-${patientId}`, "");
 
-        const physician = document.getElementById('physician').value || '';
-        const note = document.getElementById('newNote').value || '';
+      const physician = document.getElementById(`physician-${patientId}`).value.trim();
+      const note = document.getElementById(`note-${patientId}`).value.trim();
 
-        if (!physician.trim() || !note.trim()) {
-            setStatus('addStatus', 'Physician and note are required.');
-            return;
-        }
+      if (!physician) {
+        setText(`err-${patientId}`, "Physician is required.");
+        return;
+      }
 
-        setStatus('addStatus', 'Saving...');
+      if (!note) {
+        setText(`err-${patientId}`, "Note is required.");
+        return;
+      }
 
-        try {
-            const res = await authFetch(`/api/patients/${encodeURIComponent(patientId)}/notes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ physician, note })
-            });
+      try {
+        const saved = await api(`/api/patients/${encodeURIComponent(patientId)}/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ physician, note })
+        });
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-
-            document.getElementById('newNote').value = '';
-            setStatus('addStatus', 'Saved.');
-
-            await loadNotes();
-            await loadRisk();
-        } catch (e) {
-            setStatus('addStatus', 'ERROR saving note: ' + e);
-        }
+        setText(`msg-${patientId}`, `Note saved. Note ID: ${saved.id}`);
+        document.getElementById(`note-${patientId}`).value = "";
+        await loadNotes(patientId);
+      } catch (e) {
+        setText(`err-${patientId}`, e.message || String(e));
+      }
     }
+
+    async function loadNotes(patientId) {
+      const section = document.getElementById(`notesSection-${patientId}`);
+      const box = document.getElementById(`notes-${patientId}`);
+
+      if (!section || !box) return;
+
+      try {
+        const notes = await api(`/api/patients/${encodeURIComponent(patientId)}/notes`);
+
+        section.style.display = "block";
+
+        if (!Array.isArray(notes) || notes.length === 0) {
+          box.innerText = "No notes yet.";
+          return;
+        }
+
+        box.innerText = notes
+          .map(n => `• ${n.physician}: ${n.note}`)
+          .join("\n");
+      } catch (e) {
+        section.style.display = "block";
+        box.innerText = "Could not load notes.";
+      }
+    }
+
+    async function assessRisk(patientId) {
+      setText(`msg-${patientId}`, "");
+      setText(`err-${patientId}`, "");
+      const box = document.getElementById(`risk-${patientId}`);
+      box.style.display = "none";
+      box.innerText = "";
+      box.className = "result-box";
+
+      try {
+        const result = await api(`/api/assess/${encodeURIComponent(patientId)}`);
+        const riskLevel = result && result.riskLevel ? result.riskLevel : "Unknown";
+
+        box.style.display = "block";
+        box.innerText = `Risk level: ${riskLevel}`;
+
+        if (riskLevel === "None") {
+          box.classList.add("risk-none");
+        } else if (riskLevel === "Borderline") {
+          box.classList.add("risk-borderline");
+        } else if (riskLevel === "In Danger") {
+          box.classList.add("risk-danger");
+        } else if (riskLevel === "Early onset") {
+          box.classList.add("risk-early");
+        }
+      } catch (e) {
+        setText(`err-${patientId}`, e.message || String(e));
+      }
+    }
+
+    loadSavedLoginIntoInputs();
+    hideProtectedSections();
 </script>
 </body>
 </html>

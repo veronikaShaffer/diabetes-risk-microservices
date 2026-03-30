@@ -52,7 +52,7 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- ✅ tests belong here -->
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -81,7 +81,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/*Application*</exclude>
-                        <exclude>**/config/**</exclude>
+<!--                        <exclude>**/config/**</exclude>-->
                     </excludes>
                 </configuration>
 
