@@ -1,123 +1,138 @@
-Diabetes Risk Assessment System:
+Diabetes Risk Assessment System
+
+Overview
 This project is a microservices-based application used to assess the risk of early-onset diabetes for patients based on:
+
 Demographic data (age, sex)
 Physician notes containing medical trigger terms
 
-The system consists of:
-Gateway Service
-Patient Service
-Notes Service
-Risk Service
-Static UI
-MongoDB
+The application provides a UI-driven workflow where users can:
+
+Log in
+View existing patients
+Add new patients
+Add physician notes
+Automatically assess diabetes risk
+
+Architecture
+
+The system consists of the following services:
+
+Gateway Service (Spring Cloud Gateway + Security)
+Patient Service (Spring Boot + H2 Database)
+Notes Service (Spring Boot + MongoDB)
+Risk Service (Spring Boot)
+UI Service (Static HTML + Nginx)
 Dockerized environment
+
 All services communicate through the API Gateway.
-Prerequisites:
+
+Prerequisites
+
 Docker & Docker Desktop
 Java 17+
 Maven
-Node.js (compatible version)
-PowerShell (Windows)
 
-Running the Application: Start all services in powershell from the project root running ./run-all.ps1
-This script:
-Starts MongoDB
-Starts all Spring Boot microservices
-Starts the API Gateway
-Starts the Angular UI
+Running the Application
 
-Ensures services are started in the correct order
-Stop the application: Stop all services in powershell from the project root running ./stop-all.ps1
+From the project root, run:
 
-Health Checks(After startup, verify services are running):
-Invoke-RestMethod http://localhost:8080/actuator/health
-Invoke-RestMethod http://localhost:8081/actuator/health
-Invoke-RestMethod http://localhost:8082/actuator/health
-Invoke-RestMethod http://localhost:8083/actuator/health
+./run-all.ps1
 
-Security (Run once per PowerShell session): $cred = Get-Credential 
-//username: demo password: demo
+This script will:
 
-Patient Service
-Add a Patient ( via powershell):
-$body = @{
-  firstName = "John"
-  lastName  = "Lee"
-  dob       = "1984-03-06"
-  sex       = "M"
-  address   = "1509 Culver St"
-  phone     = "841-874-6512"
-} | ConvertTo-Json
+Start MongoDB
+Start all microservices
+Start the API Gateway
+Start the UI
 
-Invoke-RestMethod `
-  -Method Post `
-  -Uri "http://localhost:8080/api/patients" `
-  -ContentType "application/json" `
-  -Body $body `
-  -Credential $cred
-  
-Verify Patient Creation : curl.exe http://localhost:8080/api/patients
+Access the Application
 
-Notes Service
-Add a note for the patient using patientId ( via powershell):
-$body = @{
-  physician = "Dr. Demo"
-  note      = "Patient reports dizziness and headaches."
-} | ConvertTo-Json
+Open in browser:
 
-Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/patients/<PATIENT_ID>/notes" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body $body `
-  -Credential $cred
-( or can be added in UI : http://localhost:4200)
-Add Notes With Trigger Terms:
-$body = @{
-  physician = "Dr. Demo"
-  note = "hemoglobin a1c microalbumin smoking cholesterol abnormal"
-} | ConvertTo-Json
+http://localhost:4200
 
-Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/patients/<PATIENT_ID>/notes" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body $body `
-  -Credential $cred
+Authentication
 
-Risk Service
-Assess Diabetes Risk via powershell:
-Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/assess/<PATIENT_ID>" `
-  -Method Get `
-  -Credential $cred
-(can be seen in UI)
+Username: demo
+Password: demo
 
-Possible Risk Levels
+Patient Workflow (UI)
+
+After logging in:
+
+View Patients
+
+Patients are preloaded in the H2 database
+Displayed automatically in the UI
+
+Add Patient
+
+Fill out the patient form in the UI
+Data is stored in the H2 database
+
+Add Notes
+
+Add notes for a selected patient
+Notes are stored in MongoDB
+
+Risk Assessment
+
+Risk is calculated automatically
+Based on:
+Patient age
+Gender
+Trigger terms in notes
+
+Risk Levels
+
 None
 Borderline
 In Danger
 Early Onset
 
-Gateway Routes:
-in powershell: Invoke-RestMethod http://localhost:8080/actuator/gateway/routes
+Data Persistence
 
-Expected routes:
+Patient data → H2 database (initialized via data.sql)
+Notes data → MongoDB
+Data persists during runtime
+
+H2 Database Access
+
+URL:
+http://localhost:8081/h2-console
+
+Connection Settings:
+JDBC URL: jdbc:h2:mem:testdb
+Username: sa
+Password: (leave empty)
+
+Gateway Routes
+
 /api/patients/** → patient-service
 /api/patients/*/notes/** → notes-service
 /api/assess/** → risk-service
-Data Persistence
 
-Data is stored in MongoDB
-Data persists between service restarts
+Health Check
 
-Test Coverage (JaCoCo 80% ++) After running tests: {name}-service\target\site\jacoco\index.html  Open index.html in a browser to view coverage.
+http://localhost:8080/actuator/health
 
 Typical Workflow
-Run run-all.ps1
-Verify health endpoints
-Add a patient
-Add physician notes
-Assess diabetes risk
-View results via API or UI
-Stop services with stop-all.ps1
+
+Run ./run-all.ps1
+Open UI → http://localhost:4200
+Log in (demo/demo)
+View existing patients
+Add a new patient
+Add notes
+View calculated risk
+Stop services with ./stop-all.ps1
+
+Key Features
+
+Microservices architecture
+API Gateway with authentication
+Hybrid database approach (H2 + MongoDB)
+UI-driven interaction (no manual API calls required)
+Docker-based setup
+Automated risk calculation logic
