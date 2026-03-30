@@ -103,7 +103,7 @@ URL:
 http://localhost:8081/h2-console
 
 Connection Settings:
-JDBC URL: jdbc:h2:mem:testdb
+JDBC URL: jdbc:h2:mem:diabetes_risk_db
 Username: sa
 Password: (leave empty)
 
